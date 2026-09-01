@@ -1,17 +1,21 @@
-// import * as cdk from 'aws-cdk-lib/core';
-// import { Template } from 'aws-cdk-lib/assertions';
-// import * as ClawdJump from '../lib/clawd-jump-stack';
+import * as cdk from 'aws-cdk-lib/core';
+import { Template } from 'aws-cdk-lib/assertions';
+import { ClawdJumpStack } from '../lib/clawd-jump-stack';
 
-// example test. To run these tests, uncomment this file along with the
-// example resource in lib/clawd-jump-stack.ts
-test('SQS Queue Created', () => {
-//   const app = new cdk.App();
-//     // WHEN
-//   const stack = new ClawdJump.ClawdJumpStack(app, 'MyTestStack');
-//     // THEN
-//   const template = Template.fromStack(stack);
+test('stack has a private bucket, a CloudFront distribution and a site deployment', () => {
+  const app = new cdk.App();
+  const stack = new ClawdJumpStack(app, 'TestStack');
+  const template = Template.fromStack(stack);
 
-//   template.hasResourceProperties('AWS::SQS::Queue', {
-//     VisibilityTimeout: 300
-//   });
+  template.hasResourceProperties('AWS::S3::Bucket', {
+    PublicAccessBlockConfiguration: {
+      BlockPublicAcls: true,
+      BlockPublicPolicy: true,
+      IgnorePublicAcls: true,
+      RestrictPublicBuckets: true,
+    },
+  });
+  template.resourceCountIs('AWS::CloudFront::Distribution', 1);
+  template.resourceCountIs('AWS::CloudFront::OriginAccessControl', 1);
+  template.resourceCountIs('Custom::CDKBucketDeployment', 1);
 });
