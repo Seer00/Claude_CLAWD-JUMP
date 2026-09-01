@@ -533,28 +533,42 @@ async () => {
 Expected: `apex` is 54-58. A value near 28 means the `keyup` jump cut fired early;
 a value near 0 means the buffer/coyote gate never opened.
 
-- [ ] **Step 4: Smoke check — jump buffer accepts an early press**
+- [ ] **Step 4: Smoke check — jump buffer accepts a press made just before landing**
+
+The buffer must do two things: fire a jump for a press made slightly *before* Clawd
+lands, and expire so an early press does not fire on a much later landing.
 
 `browser_evaluate`:
 
 ```js
 async () => {
   const c = window.__game.clawd;
-  /* leave the ground, then press Space while still airborne but within BUFFER of landing */
+  const frame = () => new Promise(r => requestAnimationFrame(r));
+
+  /* negative case: press far too early - the buffer must expire before landing */
   dispatchEvent(new KeyboardEvent('keydown', { code: 'Space' }));
   dispatchEvent(new KeyboardEvent('keyup', { code: 'Space' }));
-  while (!c.onGround) await new Promise(r => requestAnimationFrame(r));
-  const landed = c.y;
-  /* press ~80ms before the next landing is irrelevant here; instead verify the
-     buffer field decays and gates correctly */
+  while (c.vy <= 0) await frame();                 /* rise to apex */
+  dispatchEvent(new KeyboardEvent('keydown', { code: 'Space' }));
+  dispatchEvent(new KeyboardEvent('keyup', { code: 'Space' }));
+  while (!c.onGround) await frame();               /* ~0.29s fall, buffer is 0.10s */
+  await frame();
+  const staleFired = c.vy < 0;
+
+  /* positive case: airborne a few pixels above the floor, press now */
+  c.y -= 6; c.vy = 100; c.onGround = false;
   dispatchEvent(new KeyboardEvent('keydown', { code: 'Space' }));
   const buffered = c.bufferT;
-  await new Promise(r => requestAnimationFrame(r));
-  return { landed, buffered, jumped: c.vy < 0 };
+  for (let i = 0; i < 6; i++) await frame();
+  dispatchEvent(new KeyboardEvent('keyup', { code: 'Space' }));
+
+  return { staleFired, buffered, freshFired: c.vy < 0 || c.y < 312 };
 }
 ```
 
-Expected: `buffered` is 0.1, `jumped` is true.
+Expected: `staleFired` is false, `buffered` is 0.1, `freshFired` is true.
+`staleFired` true means the buffer never decays. `freshFired` false means the buffer
+is consumed before the landing frame sets `onGround`.
 
 - [ ] **Step 5: Smoke check — coyote time allows a jump just after leaving an edge**
 
@@ -1609,7 +1623,7 @@ local: no missing assets, no console errors, CLEAR reachable.
 
 Replace `README.md` entirely:
 
-```markdown
+````markdown
 # Clawd Jump
 
 A pixel-art platformer starring Clawd. Pure HTML5 Canvas and vanilla JS in a single
@@ -1655,7 +1669,7 @@ npx cdk destroy
 
 The bucket uses `RemovalPolicy.DESTROY` with `autoDeleteObjects`, so teardown leaves
 nothing behind.
-```
+````
 
 - [ ] **Step 9: Commit**
 
