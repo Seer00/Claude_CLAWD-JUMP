@@ -274,7 +274,24 @@ function step(dt) {
 
   moveX(clawd.vx * dt);
   moveY(clawd.vy * dt);
+  checkTriggers();
   updateCamera();
+}
+
+/* ============================== ENTITIES =========================== */
+function checkTriggers() {
+  const c0 = Math.floor(clawd.x / TILE);
+  const c1 = maxTile(clawd.x + BOX_W);
+  const r0 = Math.floor(clawd.y / TILE);
+  const r1 = maxTile(clawd.y + BOX_H);
+  for (let r = r0; r <= r1; r++) {
+    for (let c = c0; c <= c1; c++) {
+      if (tileAt(c, r) === "C") {
+        map[r][c] = ".";
+        game.coins++;
+      }
+    }
+  }
 }
 
 /* ============================== RENDER ============================== */
@@ -363,11 +380,20 @@ function drawTiles() {
   }
 }
 
+function drawHud() {
+  ctx.fillStyle = C_TEXT;
+  ctx.font = "bold 12px monospace";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+  ctx.fillText("COINS " + game.coins + "/" + COIN_TOTAL, 8, 8);
+}
+
 function render() {
   drawSky();
   drawHills();
   drawTiles();
   drawClawd();
+  drawHud();
 }
 
 /* ============================== GAME =============================== */
