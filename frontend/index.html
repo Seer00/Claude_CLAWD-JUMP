@@ -279,16 +279,28 @@ function step(dt) {
 }
 
 /* ============================== ENTITIES =========================== */
+function die() {
+  respawn();
+}
+
 function checkTriggers() {
+  if (clawd.y > LEVEL_H) { die(); return; }
+
   const c0 = Math.floor(clawd.x / TILE);
   const c1 = maxTile(clawd.x + BOX_W);
   const r0 = Math.floor(clawd.y / TILE);
   const r1 = maxTile(clawd.y + BOX_H);
   for (let r = r0; r <= r1; r++) {
     for (let c = c0; c <= c1; c++) {
-      if (tileAt(c, r) === "C") {
+      const t = tileAt(c, r);
+      if (t === "C") {
         map[r][c] = ".";
         game.coins++;
+      } else if (t === "^") {
+        /* The spike sprite occupies only the lower half of its tile, so the
+           hurtbox must too. A whole-tile hurtbox would kill Clawd while he is
+           still visibly clearing the tip by several pixels. */
+        if (clawd.y + BOX_H > r * TILE + 8) { die(); return; }
       }
     }
   }
