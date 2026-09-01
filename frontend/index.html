@@ -64,8 +64,34 @@ ctx.imageSmoothingEnabled = false;
 
 function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
 
+/* ============================== INPUT ============================== */
+const keys = new Set();
+
+addEventListener("keydown", e => {
+  if (["ArrowLeft", "ArrowRight", "Space", "KeyR"].includes(e.code)) e.preventDefault();
+  if (e.repeat) return;
+  keys.add(e.code);
+  if (e.code === "Space") clawd.bufferT = BUFFER;
+  if (e.code === "KeyR") reset();
+});
+
+addEventListener("keyup", e => {
+  keys.delete(e.code);
+  if (e.code === "Space" && clawd.vy < 0) clawd.vy *= JUMP_CUT;
+});
+
 /* ============================== STATE =============================== */
+const clawd = {
+  x: 300, y: 200, vx: 0, vy: 0,
+  onGround: false, face: 1, coyoteT: 0, bufferT: 0
+};
+const cam = { x: 0, y: 0 };
 const game = { state: "play", coins: 0, t: 0 };
+
+function reset() {
+  game.state = "play";
+  game.coins = 0;
+}
 
 /* ============================== PHYSICS ============================= */
 function step(dt) {
@@ -84,8 +110,34 @@ function drawSky() {
   ctx.fillRect(0, 0, W, H);
 }
 
+function blit(pattern, x, y, scale, color) {
+  ctx.fillStyle = color;
+  for (let r = 0; r < pattern.length; r++) {
+    const row = pattern[r];
+    for (let c = 0; c < row.length; c++) {
+      if (row[c] === ".") continue;
+      ctx.fillRect(x + c * scale, y + r * scale, scale, scale);
+    }
+  }
+}
+
+function drawClawd() {
+  const x = Math.round(clawd.x - SPRITE_OFF - cam.x);
+  const y = Math.round(clawd.y - cam.y);
+  for (let r = 0; r < 8; r++) {
+    const row = CLAWD[r];
+    for (let c = 0; c < 12; c++) {
+      const ch = row[clawd.face === 1 ? c : 11 - c];
+      if (ch === ".") continue;
+      ctx.fillStyle = PALETTE[ch];
+      ctx.fillRect(x + c * CELL, y + r * CELL, CELL, CELL);
+    }
+  }
+}
+
 function render() {
   drawSky();
+  drawClawd();
 }
 
 /* ============================== GAME =============================== */
@@ -105,7 +157,7 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 
-window.__game = { game };
+window.__game = { game, clawd, cam, keys };
 requestAnimationFrame(frame);
 </script>
 </body>
