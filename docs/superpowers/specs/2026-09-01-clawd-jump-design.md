@@ -166,7 +166,8 @@ vertical scrolling with no code change.
 | `C` | coin | no (trigger) |
 | `^` | spike | no (trigger) |
 | `F` | flag / goal | no (trigger) |
-| `S` | spawn point | no (renders nothing) |
+| `S` | Clawd spawn point | no (renders nothing) |
+| `M` | patrolling foe spawn | no (renders nothing) |
 
 `S` is an addition to the original glyph list. The requirements call for respawn at
 the start point, so the start point belongs in the map data rather than as a
@@ -244,6 +245,55 @@ A spike originally sat at col 68, exactly in that arc, with no avoidance path at
 it was moved into the corridor at col 74. When editing the map, size landing pads
 against the descending-jump reach, not the 84px flat reach.
 
+## 8.4 Patrolling foes
+
+Rendered exactly like Clawd - a small char array at 3px cells with its own palette,
+flipped by index (`7 - c`) rather than a canvas transform.
+
+```
+const FOE = [ "..MMMM..", ".MMMMMM.", "MMKMMKMM",
+              "MMMMMMMM", ".MMMMMM.", "M.M..M.M" ];
+const FOE_PALETTE = { M: "#7C6BB0", K: "#14130F" };
+```
+
+Sprite 24x18px (8x6 cells), collision box **20x18**, `FOE_SPRITE_OFF` 2.
+
+| Constant | Value |
+| --- | --- |
+| `FOE_SPEED` | 40px/s - a third of `MAX_RUN`, so approach is telegraphed |
+| `STOMP_VY` | -300 - weaker than a full jump (-504) |
+| `STOMP_GRACE` | 12px - feet must land within the foe's top 12 of 18px |
+
+**Foes have no gravity.** Their `y` is fixed at spawn to their platform's surface;
+they only move horizontally. Patrol bounds are derived from the map rather than
+stored: `spawnFoes()` scans the contiguous solid run in the row beneath the spawn
+tile. Widening a platform therefore retargets its foe automatically, so bounds can
+never drift out of sync with the terrain.
+
+`FOE_W` (20) exceeds `TILE` (16), so centring a foe on its spawn tile produces a
+*negative* offset. When that tile is the platform's edge tile the foe starts partly
+over the void, so the spawn `x` is clamped into the patrol range.
+
+### Contact resolution
+
+A stomp requires **both** a descent and feet inside the top band:
+
+```
+clawd.vy > 0  &&  clawd.y + BOX_H - foe.y <= STOMP_GRACE
+```
+
+Testing `vy > 0` alone would let a rising Clawd kill a foe by clipping its head;
+testing only the band would let him kill it by walking into its shoulder. Any other
+overlap - side, or from below - calls `die()`, the same path as a spike.
+
+### Placement
+
+| Spawn tile | Platform | Patrol range |
+| --- | --- | --- |
+| `M` (17, 28) | overhead platform, cols 28-31 | 44px |
+| `M` (16, 46) | staircase top, cols 44-48 | 60px |
+| `M` (17, 94) | final platform before the flag, cols 92-99 | 108px |
+
 ## 9. Camera
 
 ```
@@ -271,6 +321,7 @@ terrain, so no artwork or extra requests are needed.
 | Coin / highlight | `#E8C547` / `#FFF3C4` |
 | Spike | `#9A9287` |
 | Flag pole / cloth | `#14130F` / `#3F9E77` |
+| Foe body / eyes | `#7C6BB0` / `#14130F` |
 | HUD text | `#14130F` |
 
 Coins are gold rather than Clawd's `#D97757` so a coin is never mistaken for
@@ -281,14 +332,19 @@ Clawd at a glance; the flag cloth is green for the same reason.
 Two states: `play` and `clear`.
 
 - **Coins** are score only. The flag is never locked. Collecting sets the map cell
-  to `.`.
+  to `.`. Foe kills are likewise score only.
+- **Foes** are killed by stomping and kill Clawd on any other contact. A kill
+  increments `game.kills` and bounces Clawd with `STOMP_VY`.
+- **Killed foes stay dead across a respawn**, exactly like collected coins; only `R`
+  restores them (`reset()` calls `spawnFoes()`).
 - **Death** = touching a spike **or** falling past the bottom of the level.
   Respawn at `S` with velocity zeroed.
 - **Collected coins survive respawn.** Death carries no coin penalty.
 - **`R`** performs a full reset (coins included) and works in both states.
 - **Flag** switches to `clear`, which draws a `CLEAR!` overlay with the collection
   ratio and a `press R` prompt.
-- **HUD** (state `play`): `COINS n/15` top-left.
+- **HUD** (state `play`): `COINS n/15   KILLS m/3` top-left. Both denominators are
+  counted from the map at load time, never hardcoded.
 
 ## 13. Deployment (Phase 4)
 
