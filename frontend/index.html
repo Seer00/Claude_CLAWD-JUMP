@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clawd Jump</title>
+<style>
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: #14130F;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: monospace;
+  }
+  canvas {
+    display: block;
+    width: 100%;
+    max-width: 1280px;
+    aspect-ratio: 16 / 9;
+    image-rendering: pixelated;
+  }
+</style>
+</head>
+<body>
+<canvas id="game" width="640" height="360"></canvas>
+<script>
+/* ============================== CONFIG ============================== */
+const W = 640, H = 360, TILE = 16, CELL = 3;
+
+const GRAVITY = 1400, MAX_FALL = 620;
+const ACCEL = 900, FRICTION = 1400, MAX_RUN = 140;
+const JUMP_VY = -400, JUMP_CUT = 0.4;
+const COYOTE = 0.10, BUFFER = 0.10;
+const STEP = 1 / 60, MAX_STEPS = 5;
+
+const CLAWD = [
+  ".AAAAAAAAAA.",
+  ".AAAAAAAAAA.",
+  ".AABAAAABAA.",
+  "AAAAAAAAAAAA",
+  "AAAAAAAAAAAA",
+  ".AAAAAAAAAA.",
+  "..A.A..A.A..",
+  "..A.A..A.A.."
+];
+const PALETTE = { A: "#D97757", B: "#14130F" };
+
+const SPRITE_W = 12 * CELL, SPRITE_H = 8 * CELL;   /* 36 x 24 */
+const BOX_W = 30, BOX_H = 24;
+const SPRITE_OFF = (SPRITE_W - BOX_W) / 2;          /* 3 */
+
+const C_SKY_TOP = "#F0EEE6", C_SKY_BOT = "#E3DDD0", C_HILL = "#CFC7B5";
+const C_TERRAIN = "#3B3630", C_TERRAIN_CAP = "#5C554A";
+const C_COIN = "#E8C547", C_COIN_HI = "#FFF3C4";
+const C_SPIKE = "#9A9287";
+const C_FLAG_POLE = "#14130F", C_FLAG_CLOTH = "#3F9E77";
+const C_TEXT = "#14130F";
+
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+ctx.imageSmoothingEnabled = false;
+
+function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
+
+/* ============================== STATE =============================== */
+const game = { state: "play", coins: 0, t: 0 };
+
+/* ============================== PHYSICS ============================= */
+function step(dt) {
+  if (game.state !== "play") return;
+}
+
+/* ============================== RENDER ============================== */
+let skyGrad = null;
+function drawSky() {
+  if (!skyGrad) {
+    skyGrad = ctx.createLinearGradient(0, 0, 0, H);
+    skyGrad.addColorStop(0, C_SKY_TOP);
+    skyGrad.addColorStop(1, C_SKY_BOT);
+  }
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(0, 0, W, H);
+}
+
+function render() {
+  drawSky();
+}
+
+/* ============================== GAME =============================== */
+let last = performance.now(), acc = 0;
+function frame(now) {
+  acc += (now - last) / 1000;
+  last = now;
+  let n = 0;
+  while (acc >= STEP && n < MAX_STEPS) {
+    game.t += STEP;
+    step(STEP);
+    acc -= STEP;
+    n++;
+  }
+  if (acc > STEP * MAX_STEPS) acc = 0;
+  render();
+  requestAnimationFrame(frame);
+}
+
+window.__game = { game };
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
