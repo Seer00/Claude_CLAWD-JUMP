@@ -107,7 +107,7 @@ const MAP_SRC = [
   ".............................CC...........C.XXXXX..XXX................XXXXXXXXX..............C...F..",
   "...................C........XXXX.......C.XXXXXXXX...........................................XXXXXXXX",
   "......................................XXXXXXXXXXX....................................C..XXX.....XXXX",
-  "..S....C..C....XXX.......^^......^.XXXXXXXXXXXXXX...................^...C...C....^..XXX.XXX.....XXXX",
+  "..S....C..C....XXX.......^^.....^^.XXXXXXXXXXXXXX.......................C...C......^XXX.XXX.....XXXX",
   "XXXXXXXXXXXXXXXXXX...XXXXXXXXXXXXXXXXXXXXXXXXXXXX.................XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
   "XXXXXXXXXXXXXXXXXX...XXXXXXXXXXXXXXXXXXXXXXXXXXXX.................XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
 ];
@@ -301,6 +301,9 @@ function checkTriggers() {
            hurtbox must too. A whole-tile hurtbox would kill Clawd while he is
            still visibly clearing the tip by several pixels. */
         if (clawd.y + BOX_H > r * TILE + 8) { die(); return; }
+      } else if (t === "F") {
+        game.state = "clear";
+        return;
       }
     }
   }
@@ -400,12 +403,27 @@ function drawHud() {
   ctx.fillText("COINS " + game.coins + "/" + COIN_TOTAL, 8, 8);
 }
 
+function drawClear() {
+  ctx.fillStyle = "rgba(240,238,230,0.88)";
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = C_TEXT;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  ctx.font = "bold 32px monospace";
+  ctx.fillText("CLEAR!", W / 2, 120);
+  ctx.font = "bold 14px monospace";
+  ctx.fillText("COINS " + game.coins + " / " + COIN_TOTAL, W / 2, 178);
+  ctx.fillText("press R to restart", W / 2, 206);
+  ctx.textAlign = "left";
+}
+
 function render() {
   drawSky();
   drawHills();
   drawTiles();
   drawClawd();
-  drawHud();
+  if (game.state === "clear") drawClear();
+  else drawHud();
 }
 
 /* ============================== GAME =============================== */

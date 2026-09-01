@@ -663,7 +663,7 @@ const MAP_SRC = [
   ".............................CC...........C.XXXXX..XXX................XXXXXXXXX..............C...F..",
   "...................C........XXXX.......C.XXXXXXXX...........................................XXXXXXXX",
   "......................................XXXXXXXXXXX....................................C..XXX.....XXXX",
-  "..S....C..C....XXX.......^^......^.XXXXXXXXXXXXXX...................^...C...C....^..XXX.XXX.....XXXX",
+  "..S....C..C....XXX.......^^.....^^.XXXXXXXXXXXXXX.......................C...C......^XXX.XXX.....XXXX",
   "XXXXXXXXXXXXXXXXXX...XXXXXXXXXXXXXXXXXXXXXXXXXXXX.................XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
   "XXXXXXXXXXXXXXXXXX...XXXXXXXXXXXXXXXXXXXXXXXXXXXX.................XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
 ];

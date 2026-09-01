@@ -170,7 +170,7 @@ hardcoded constant.
 .............................CC...........C.XXXXX..XXX................XXXXXXXXX..............C...F..
 ...................C........XXXX.......C.XXXXXXXX...........................................XXXXXXXX
 ......................................XXXXXXXXXXX....................................C..XXX.....XXXX
-..S....C..C....XXX.......^^......^.XXXXXXXXXXXXXX...................^...C...C....^..XXX.XXX.....XXXX
+..S....C..C....XXX.......^^.....^^.XXXXXXXXXXXXXX.......................C...C......^XXX.XXX.....XXXX
 XXXXXXXXXXXXXXXXXX...XXXXXXXXXXXXXXXXXXXXXXXXXXXX.................XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 XXXXXXXXXXXXXXXXXX...XXXXXXXXXXXXXXXXXXXXXXXXXXXX.................XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ```
@@ -184,14 +184,40 @@ map at load time, never hardcoded.
 | --- | --- |
 | 0-17 | Flat tutorial ground, 2 coins, one 1-tile step |
 | 18-20 | 3-tile gap with an airborne coin at the jump apex |
-| 21-34 | Ground with 3 spikes; overhead platform (cols 28-31) holding 2 coins |
+| 21-34 | Ground with spikes at cols 25/26 and 32/33; overhead platform (cols 28-31) holding 2 coins |
 | 35-48 | Four-step staircase climbing 4 tiles, 3 coins |
 | 49-65 | Death pit spanned by three floating platforms, 3 coins |
-| 66-83 | Ground restored; low 3-tile ceiling corridor (cols 70-78), 2 coins, spikes at both mouths |
+| 66-83 | Ground restored; low 3-tile ceiling corridor (cols 70-78), 2 coins, no spikes (see fairness rule) |
 | 84-99 | Final climb over two steps and a platform to the flag at col 97 |
 
-Spikes are never placed under an overhead platform: a 2-tile corridor leaves only
-8px of headroom, which makes hopping a spike impossible rather than difficult.
+**Spike fairness is a question of time, not height.** Clearing a spike needs 8px of
+lift (the hurtbox is the tile's lower half), but that lift must be *held* for the whole
+crossing: hazard width = `BOX_W + TILE` = 46px, so at `MAX_RUN` 140px/s the feet must
+stay above the tip for **0.329s**.
+
+- Open sky: feet are above 8px for 0.56s. Comfortable.
+- Under a 3-tile ceiling (24px headroom): the rise is cut off at 24px after 0.064s,
+  then the 16px fall back to the tip takes 0.151s - a window of just **0.195s**.
+
+So **no spike may sit anywhere a ceiling caps the jump**, regardless of headroom -
+and that includes just *past* a ceiling. Clawd's jump stays capped while any part of
+his 30px box is still under the last ceiling tile, so a hazard needs roughly 2 tiles
+of unobstructed runway after the ceiling ends before its window opens. A spike at
+col 81, three tiles past the corridor's end at col 78, left about 2px of free runway
+and was moved to col 83.
+
+A
+spike was moved into the corridor at col 74 to escape a landing zone and turned out to
+be equally impossible; it now sits at col 32, pairing with col 33 at the same
+difficulty as the proven col 25/26 pair.
+
+Spikes are also never placed in a landing zone. **A jump that loses altitude travels
+much further than the flat-ground reach.** Leaving platform 3 (col 63, row 16) for the
+ground at row 21 drops 80px, which stretches airtime to 0.746s and horizontal travel
+to 104px (6.5 tiles) - and even walking off the edge without jumping carries 47px.
+A spike originally sat at col 68, exactly in that arc, with no avoidance path at all;
+it was moved into the corridor at col 74. When editing the map, size landing pads
+against the descending-jump reach, not the 84px flat reach.
 
 ## 9. Camera
 
