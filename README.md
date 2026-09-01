@@ -18,8 +18,12 @@ file — no libraries, no build step.
 | Space | Jump (hold for a higher jump, tap for a hop) |
 | R | Restart |
 
-Collect coins, avoid spikes, reach the flag. Spikes and falling into a pit respawn
-you at the start; collected coins are kept. `R` resets everything, including coins.
+Collect coins, stomp the patrolling foes, avoid spikes, reach the flag.
+
+Foes walk their platform and turn at the edges. Land on one from above to squash it
+and get a small bounce; touch one from the side or below and you respawn. Spikes and
+falling into a pit also respawn you at the start. Collected coins and squashed foes
+are kept across a respawn — `R` resets everything.
 
 ## Run locally
 
