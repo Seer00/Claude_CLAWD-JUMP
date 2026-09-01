@@ -57,8 +57,10 @@ nothing behind.
 Physics constants are grouped at the top of the `CONFIG` section. Two things to know
 before editing the level, both learned the hard way (see the spec for the arithmetic):
 
+- **`MAX_RUN` is derived from the jump, not chosen.** Reach = airtime x `MAX_RUN`, and
+  the level is sized against ~84px. Change the jump and you must re-check reach.
 - **A jump that loses altitude travels much further than the flat-ground reach.**
-  Flat reach is 84px; dropping 80px off a platform carries 104px.
+  Flat reach is 84px; dropping 80px off a platform carries over 100px.
 - **Spike fairness is about time, not height.** The hazard is 46px wide and needs
   0.329s of clearance, so no spike may sit where a ceiling caps the jump — including
   within ~2 tiles after the ceiling ends.

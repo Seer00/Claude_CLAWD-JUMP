@@ -78,33 +78,58 @@ This matters because gravity is Euler-integrated (`vy += G * dt`). With a variab
 
 | Constant | Value | Unit |
 | --- | --- | --- |
-| `GRAVITY` | 1400 | px/s^2 |
-| `MAX_FALL` | 620 | px/s |
+| `GRAVITY_RISE` | 1650 | px/s^2 (while `vy < -APEX_VY`) |
+| `GRAVITY_APEX` | 800 | px/s^2 (while `|vy| < APEX_VY`) |
+| `GRAVITY_FALL` | 3300 | px/s^2 (while `vy > APEX_VY`) |
+| `APEX_VY` | 100 | px/s, half-width of the hang band |
+| `MAX_FALL` | 1000 | px/s |
 | `ACCEL` | 900 | px/s^2 |
 | `FRICTION` | 1400 | px/s^2 |
-| `MAX_RUN` | 140 | px/s |
-| `JUMP_VY` | -420 | px/s |
+| `MAX_RUN` | 126 | px/s |
+| `JUMP_VY` | -504 | px/s |
 | `JUMP_CUT` | 0.4 | multiplier on release while rising |
 | `COYOTE` | 0.10 | s |
 | `BUFFER` | 0.10 | s |
 
-Derived envelope, which the level design must respect.
+### 6.1 Asymmetric gravity
 
-The continuous-time formula `v^2 / 2g` overstates the real apex. Physics is explicit
-Euler at `dt = 1/60` with gravity applied *before* the position update, so the first
-step already sheds `g * dt` from the launch velocity. The apex actually reached is:
+Gravity is split three ways so the jump floats up and drops hard. A single gravity
+forces the rise and fall to mirror each other, which reads as floaty coming down.
 
 ```
-apex = (1/60) * sum(i=1..n) (JUMP_VY + i * GRAVITY / 60),  n = floor(|JUMP_VY| * 60 / GRAVITY)
+gravityFor(vy) = vy < -APEX_VY ? GRAVITY_RISE
+               : vy >  APEX_VY ? GRAVITY_FALL
+               : GRAVITY_APEX
 ```
 
-For `JUMP_VY = -420`: `n = 18`, terms stay negative through `i = 17`, giving
-**59.5px**. (`-400` would give 53.8px, only 5.8px of margin over the level's
-tightest 3-tile rise — measured, not estimated.)
+The hang band straddles zero, so it covers the tail of the rise *and* the start of the
+fall, making the hover symmetric about the peak rather than an abrupt slow-then-drop.
 
-- Jump apex: **59.5px ~= 3.7 tiles**
-- Airtime = `2 * 420 / 1400` = 0.6s; horizontal reach = `0.6 * 140` = **84px ~= 5 tiles**
-- Therefore: **max gap 4 tiles, max single rise 3 tiles**, leaving 11.5px of apex margin.
+### 6.2 Measured envelope
+
+Continuous-time formulas mislead here (explicit Euler at `dt = 1/60`, gravity applied
+before the position update), so these are harness measurements, not derivations:
+
+| Quantity | Value |
+| --- | --- |
+| Apex (held) | 75.5px = 4.7 tiles |
+| Apex (tapped) | 32.1px |
+| Rise / hang / drop | 0.233s / 0.267s / 0.167s |
+| Drop vs rise | 0.71x - the fall is 29% quicker |
+| Peak fall speed | 604px/s (launch is 504px/s) |
+| Airtime | 0.667s |
+| Horizontal reach | 84px = 5.25 tiles |
+| Feet above a spike tip | 0.633s |
+
+**`MAX_RUN` is derived, not chosen.** Horizontal reach = airtime x `MAX_RUN`, and every
+gap, landing pad and spike run was sized against ~84px of reach. Raising the jump
+lengthened airtime from 0.583s to 0.667s, which alone pushed reach to 93px and began
+landing full-power jumps on top of the col 25/26 spikes - with the tutorial gap
+feeding straight into them. `MAX_RUN` 140 -> 126 restores 84px. **Any future change to
+the jump must re-check reach and re-run the traversal bot.**
+
+- Level constraints unchanged: **max gap 4 tiles, max single rise 3 tiles.**
+- The 3-tile rise now clears with 27px of apex margin (was 11.5px).
 
 Per-step displacement is at most 2.33px horizontally and 10.3px vertically, both
 under `TILE`, so single-tile collision probing per axis cannot tunnel.
