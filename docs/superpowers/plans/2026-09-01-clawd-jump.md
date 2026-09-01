@@ -21,7 +21,7 @@ Control, uploaded by `BucketDeployment`.
 - `CLAWD` (12x8) and `PALETTE` (`{ A: "#D97757", B: "#14130F" }`) are copied verbatim from the requirements. Never restyle Clawd.
 - Cell size `CELL = 3`. Tile size `TILE = 16`.
 - Coyote time `COYOTE = 0.10`s. Jump buffer `BUFFER = 0.10`s.
-- Physics: `GRAVITY 1400`, `MAX_FALL 620`, `ACCEL 900`, `FRICTION 1400`, `MAX_RUN 140`, `JUMP_VY -400`, `JUMP_CUT 0.4`, `STEP 1/60`, `MAX_STEPS 5`.
+- Physics: `GRAVITY 1400`, `MAX_FALL 620`, `ACCEL 900`, `FRICTION 1400`, `MAX_RUN 140`, `JUMP_VY -420`, `JUMP_CUT 0.4`, `STEP 1/60`, `MAX_STEPS 5`.
 - Clawd collision box is `BOX_W 30` x `BOX_H 24`; sprite is 36x24; `SPRITE_OFF = 3`.
 - Controls: `ArrowLeft` / `ArrowRight` move, `Space` jumps, `KeyR` restarts.
 - Coins are score only. The flag is never locked.
@@ -109,7 +109,7 @@ const W = 640, H = 360, TILE = 16, CELL = 3;
 
 const GRAVITY = 1400, MAX_FALL = 620;
 const ACCEL = 900, FRICTION = 1400, MAX_RUN = 140;
-const JUMP_VY = -400, JUMP_CUT = 0.4;
+const JUMP_VY = -420, JUMP_CUT = 0.4;
 const COYOTE = 0.10, BUFFER = 0.10;
 const STEP = 1 / 60, MAX_STEPS = 5;
 
@@ -530,7 +530,7 @@ async () => {
 }
 ```
 
-Expected: `apex` is 54-58. A value near 28 means the `keyup` jump cut fired early;
+Expected: `apex` is 58-61 (discrete-Euler apex for JUMP_VY -420 is 59.5). A value near 28 means the `keyup` jump cut fired early;
 a value near 0 means the buffer/coyote gate never opened.
 
 - [ ] **Step 4: Smoke check — jump buffer accepts a press made just before landing**

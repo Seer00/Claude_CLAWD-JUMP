@@ -31,7 +31,7 @@ const W = 640, H = 360, TILE = 16, CELL = 3;
 
 const GRAVITY = 1400, MAX_FALL = 620;
 const ACCEL = 900, FRICTION = 1400, MAX_RUN = 140;
-const JUMP_VY = -400, JUMP_CUT = 0.4;
+const JUMP_VY = -420, JUMP_CUT = 0.4;
 const COYOTE = 0.10, BUFFER = 0.10;
 const STEP = 1 / 60, MAX_STEPS = 5;
 
@@ -94,8 +94,81 @@ function reset() {
 }
 
 /* ============================== PHYSICS ============================= */
+/* TEMPORARY: replaced by a map lookup in Task 4. Flat floor at row 21. */
+function isSolid(c, r) {
+  return r >= 21;
+}
+
+function spansSolidV(c, top, bot) {
+  for (let r = Math.floor(top / TILE); r <= Math.floor(bot / TILE); r++)
+    if (isSolid(c, r)) return true;
+  return false;
+}
+
+function spansSolidH(r, left, right) {
+  for (let c = Math.floor(left / TILE); c <= Math.floor(right / TILE); c++)
+    if (isSolid(c, r)) return true;
+  return false;
+}
+
+function moveX(d) {
+  if (d === 0) return;
+  clawd.x += d;
+  const top = clawd.y, bot = clawd.y + BOX_H - 1;
+  if (d > 0) {
+    const c = Math.floor((clawd.x + BOX_W - 1) / TILE);
+    if (spansSolidV(c, top, bot)) { clawd.x = c * TILE - BOX_W; clawd.vx = 0; }
+  } else {
+    const c = Math.floor(clawd.x / TILE);
+    if (spansSolidV(c, top, bot)) { clawd.x = (c + 1) * TILE; clawd.vx = 0; }
+  }
+}
+
+function moveY(d) {
+  clawd.onGround = false;
+  clawd.y += d;
+  const left = clawd.x, right = clawd.x + BOX_W - 1;
+  if (d > 0) {
+    const r = Math.floor((clawd.y + BOX_H - 1) / TILE);
+    if (spansSolidH(r, left, right)) {
+      clawd.y = r * TILE - BOX_H;
+      clawd.vy = 0;
+      clawd.onGround = true;
+    }
+  } else if (d < 0) {
+    const r = Math.floor(clawd.y / TILE);
+    if (spansSolidH(r, left, right)) { clawd.y = (r + 1) * TILE; clawd.vy = 0; }
+  }
+}
+
 function step(dt) {
   if (game.state !== "play") return;
+
+  const dir = (keys.has("ArrowRight") ? 1 : 0) - (keys.has("ArrowLeft") ? 1 : 0);
+  if (dir !== 0) {
+    clawd.vx += dir * ACCEL * dt;
+    clawd.face = dir;
+  } else if (clawd.vx !== 0) {
+    const s = Math.sign(clawd.vx);
+    clawd.vx -= s * FRICTION * dt;
+    if (Math.sign(clawd.vx) !== s) clawd.vx = 0;
+  }
+  clawd.vx = clamp(clawd.vx, -MAX_RUN, MAX_RUN);
+
+  clawd.coyoteT = clawd.onGround ? COYOTE : Math.max(0, clawd.coyoteT - dt);
+  clawd.bufferT = Math.max(0, clawd.bufferT - dt);
+
+  if (clawd.bufferT > 0 && clawd.coyoteT > 0) {
+    clawd.vy = JUMP_VY;
+    clawd.bufferT = 0;
+    clawd.coyoteT = 0;
+    clawd.onGround = false;
+  }
+
+  clawd.vy = Math.min(clawd.vy + GRAVITY * dt, MAX_FALL);
+
+  moveX(clawd.vx * dt);
+  moveY(clawd.vy * dt);
 }
 
 /* ============================== RENDER ============================== */

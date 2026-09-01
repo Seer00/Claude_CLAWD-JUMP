@@ -83,16 +83,28 @@ This matters because gravity is Euler-integrated (`vy += G * dt`). With a variab
 | `ACCEL` | 900 | px/s^2 |
 | `FRICTION` | 1400 | px/s^2 |
 | `MAX_RUN` | 140 | px/s |
-| `JUMP_VY` | -400 | px/s |
+| `JUMP_VY` | -420 | px/s |
 | `JUMP_CUT` | 0.4 | multiplier on release while rising |
 | `COYOTE` | 0.10 | s |
 | `BUFFER` | 0.10 | s |
 
-Derived envelope, which the level design must respect:
+Derived envelope, which the level design must respect.
 
-- Jump apex = `400^2 / (2 * 1400)` = **57px ~= 3.5 tiles**
-- Airtime = `2 * 400 / 1400` = 0.571s; horizontal reach = `0.571 * 140` = **80px ~= 5 tiles**
-- Therefore: **max gap 4 tiles, max single rise 3 tiles.**
+The continuous-time formula `v^2 / 2g` overstates the real apex. Physics is explicit
+Euler at `dt = 1/60` with gravity applied *before* the position update, so the first
+step already sheds `g * dt` from the launch velocity. The apex actually reached is:
+
+```
+apex = (1/60) * sum(i=1..n) (JUMP_VY + i * GRAVITY / 60),  n = floor(|JUMP_VY| * 60 / GRAVITY)
+```
+
+For `JUMP_VY = -420`: `n = 18`, terms stay negative through `i = 17`, giving
+**59.5px**. (`-400` would give 53.8px, only 5.8px of margin over the level's
+tightest 3-tile rise — measured, not estimated.)
+
+- Jump apex: **59.5px ~= 3.7 tiles**
+- Airtime = `2 * 420 / 1400` = 0.6s; horizontal reach = `0.6 * 140` = **84px ~= 5 tiles**
+- Therefore: **max gap 4 tiles, max single rise 3 tiles**, leaving 11.5px of apex margin.
 
 Per-step displacement is at most 2.33px horizontally and 10.3px vertically, both
 under `TILE`, so single-tile collision probing per axis cannot tunnel.
