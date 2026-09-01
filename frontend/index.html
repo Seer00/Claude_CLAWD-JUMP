@@ -174,6 +174,7 @@ function respawn() {
   clawd.face = 1;
   clawd.coyoteT = 0;
   clawd.bufferT = 0;
+  updateCamera();
 }
 
 function reset() {
@@ -240,6 +241,11 @@ function moveY(d) {
     spansSolidH(Math.floor((clawd.y + BOX_H) / TILE), left, right);
 }
 
+function updateCamera() {
+  cam.x = clamp(clawd.x + BOX_W / 2 - W / 2, 0, LEVEL_W - W);
+  cam.y = clamp(clawd.y + BOX_H / 2 - H / 2, 0, LEVEL_H - H);
+}
+
 function step(dt) {
   if (game.state !== "play") return;
 
@@ -268,6 +274,7 @@ function step(dt) {
 
   moveX(clawd.vx * dt);
   moveY(clawd.vy * dt);
+  updateCamera();
 }
 
 /* ============================== RENDER ============================== */
@@ -280,6 +287,16 @@ function drawSky() {
   }
   ctx.fillStyle = skyGrad;
   ctx.fillRect(0, 0, W, H);
+}
+
+function drawHills() {
+  ctx.fillStyle = C_HILL;
+  const off = cam.x * 0.35;
+  for (let x = 0; x < W; x += 2) {
+    const k = x + off;
+    const h = 46 + 20 * Math.sin(k * 0.010) + 12 * Math.sin(k * 0.027);
+    ctx.fillRect(x, 300 - h, 2, h + 68);
+  }
 }
 
 function blit(pattern, x, y, scale, color) {
@@ -348,6 +365,7 @@ function drawTiles() {
 
 function render() {
   drawSky();
+  drawHills();
   drawTiles();
   drawClawd();
 }
